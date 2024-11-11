@@ -44,7 +44,7 @@ public class TasksService : ITasksService
         }
         catch (System.Exception e)
         {
-             if(e.InnerException != null)
+            if (e.InnerException != null)
                 throw new Exception(e.InnerException.Message);
             else
                 throw new Exception(e.Message);
@@ -52,9 +52,34 @@ public class TasksService : ITasksService
         return result;
     }
 
-    public Task<TasksDTO> DeleteTask(int idTasks)
+    public async Task<bool> DeleteTask(int idTasks)
     {
-        throw new NotImplementedException();
+        var result = false;
+        try
+        {
+            var task = await _context.Tasks
+                        .Where(t => t.IdTasks == idTasks)
+                        .FirstOrDefaultAsync();
+            if (task != null)
+            {
+                _context.Remove(task);
+                await _context.SaveChangesAsync();
+                result = true;
+            }
+            else
+            {
+                throw new Exception("Id task does not exist!");
+            }
+        }
+        catch (DbException db)
+        {
+            throw new Exception(db.Message);
+        }
+        catch (System.Exception e)
+        {
+            throw new Exception(e.Message);
+        }
+        return result;
     }
 
     public async Task<TasksDTO> GetTaskById(int idTasks)
@@ -126,8 +151,41 @@ public class TasksService : ITasksService
         return result;
     }
 
-    public Task<TasksDTO> UpdateTask(TasksDTO Task)
+    public async Task<TasksDTO> UpdateTask(TasksDTO task)
     {
-        throw new NotImplementedException();
+        var result = new TasksDTO();
+        try
+        {
+            var taskDb = await _context.Tasks
+                        .Include(t => t.IdStatusTasksNavigation)
+                        .Where(t => t.IdTasks == task.IdTasks)
+                        .FirstOrDefaultAsync();
+            if (task != null)
+            {
+                taskDb.Description = string.IsNullOrEmpty(task.Description) ? taskDb.Description : task.Description;
+                taskDb.IdStatusTasks = task.IdStatusTasks == 0 ? taskDb.IdStatusTasks : task.IdStatusTasks;
+                taskDb.Title = string.IsNullOrEmpty(task.Title)  ? taskDb.Title : task.Title;
+                _context.Update(taskDb);
+                await _context.SaveChangesAsync();
+                result = await this.GetTaskById(task.IdTasks);
+            }
+            else
+            {
+                throw new Exception("Id task does not exist!");
+
+            }
+        }
+        catch (DbException db)
+        {
+            throw new Exception(db.Message);
+        }
+        catch (System.Exception e)
+        {
+            if (e.InnerException != null)
+                throw new Exception(e.InnerException.Message);
+            else
+                throw new Exception(e.Message);
+        }
+        return result;
     }
 }

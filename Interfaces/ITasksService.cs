@@ -9,5 +9,5 @@ public interface ITasksService
     Task<TasksDTO> GetTaskById(int idTasks);
     Task<TasksDTO> CreateTask(TasksDTO Task);
     Task<TasksDTO> UpdateTask(TasksDTO Task);
-    Task<TasksDTO> DeleteTask(int idTasks);
+    Task<bool> DeleteTask(int idTasks);
 }
